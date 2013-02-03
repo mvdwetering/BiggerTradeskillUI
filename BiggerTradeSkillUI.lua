@@ -221,6 +221,7 @@ TradeSkillRequirementText:SetPoint("TOPLEFT", TradeSkillRequirementLabel, "BOTTO
 TradeSkillReagentLabel:SetPoint("TOPLEFT", TradeSkillRequirementText, "BOTTOMLEFT", 0, -15)
 
 -- Reposition reagent buttons
+_G["TradeSkillReagent1"]:SetPoint("RIGHT", TradeSkillDetailScrollFrame, "RIGHT")
 for i=2, MAX_TRADE_SKILL_REAGENTS do
    local reagentButton = _G["TradeSkillReagent"..i]
    
@@ -232,13 +233,14 @@ end
 -- Background for reagents/detailarea
 -- Note that the background is also needed to hide a part of the original
 -- horizontal bar that I can't figure out how to hide.
-local detailBackground = TradeSkillDetailScrollFrame:CreateTexture(nil,"BACKGROUND")
+local detailBackground = TradeSkillDetailScrollFrame:CreateTexture("BTSUiTexDetailBackground","BACKGROUND")
 detailBackground:SetPoint("TOPLEFT", TradeSkillDetailScrollFrame)
 detailBackground:SetPoint("BOTTOMRIGHT", TradeSkillFrame, "BOTTOMRIGHT", -10, 29)
 detailBackground:SetTexCoord(0, 0.2, 0, 1)  -- Mess with TexCoords so the texture does not look too compressed/stretched
 detailBackground:SetTexture("Interface\\ACHIEVEMENTFRAME\\UI-GuildAchievement-Parchment-Horizontal-Desaturated")
 --detailBackground:SetTexture("Interface\\ACHIEVEMENTFRAME\\UI-GuildAchievement-Parchment")
 --detailBackground:SetTexture("Interface\\FrameGeneral\\UI-Background-Marble")
+
 
 -- Scrollbar of the recipe list
 TradeSkillListScrollFrame:ClearAllPoints()
@@ -248,7 +250,7 @@ TradeSkillListScrollFrame:SetPoint("BOTTOMRIGHT", TradeSkillDetailScrollFrame, "
 if (not BTSUiTradeSkillListScrollBarMiddle) then
    -- Use horrible random name for texture. When using a proper name like BTSUiTradeSkillListScrollBarMiddle
    -- the top and bottom parts of the scrollbar disappear
-   BTSUiTradeSkillListScrollBarMiddle = TradeSkillListScrollFrame:CreateTexture("kjfeowjpfa", "BACKGROUND")
+   BTSUiTradeSkillListScrollBarMiddle = TradeSkillListScrollFrame:CreateTexture("BTSUi_kjfeowjpfa", "BACKGROUND")
 end
 BTSUiTradeSkillListScrollBarMiddle:SetTexture("Interface\\PaperDollInfoFrame\\UI-Character-ScrollBar")
 BTSUiTradeSkillListScrollBarMiddle:SetTexCoord(0, 0.45, 0.1640625, 1)
@@ -260,7 +262,7 @@ BTSUiTradeSkillListScrollBarMiddle:SetWidth(29)
 if (not BTSUiDetailScrollBarMiddle) then
    -- Use horrible random name for texture. When using a proper name like BTSUiTradeSkillListScrollBarMiddle
    -- the top and bottom parts of the scrollbar disappear
-   BTSUiDetailScrollBarMiddle = TradeSkillDetailScrollFrame:CreateTexture("afiepipnp", "BACKGROUND")
+   BTSUiDetailScrollBarMiddle = TradeSkillDetailScrollFrame:CreateTexture("BTSUi_afiepipnp", "BACKGROUND")
    -- Additional blackish background for in the scrollbar, just because it looks better
    BTSUiDetailScrollBarMiddleBackground = TradeSkillDetailScrollFrame:CreateTexture("BTSUiMiddle2Background", "BACKGROUND")
 end
