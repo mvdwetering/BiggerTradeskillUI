@@ -1,0 +1,11 @@
+﻿## Interface: 50001
+## Title: Bigger Tradeskill UI
+## Author: Michel van de Wetering
+## Version: 1.5
+## Notes: Reorganises the Blizard Tradeskill UI so it gets bigger with more usable space.
+## URL: http://www.michelvandewetering.nl/warcraft/addons/bigger-tradeskill-ui
+## LoadOnDemand: 1
+## LoadWith: Blizzard_TradeSkillUI
+## DefaultState: Enabled
+
+BiggerTradeSkillUI.lua
