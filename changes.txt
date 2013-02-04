@@ -1,5 +1,8 @@
 Change history
 
+1.6
+- Added support for Aurora
+
 1.5
 - Fix for subclasses that have categories (like cooking)
 - Added X button to the search box like all other searches have

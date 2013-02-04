@@ -3,7 +3,8 @@ This gives more space to have easier access to the filters and a have a longer l
 
 Has support for:
 - Auctionator
+- Aurora
 
-Works with
+Works with most tradeskill addons (that work with the default Blizzard UI) like:
 - TradeTabs
-
+- Overachiever
