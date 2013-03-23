@@ -1,5 +1,8 @@
 Change history
 
+1.7
+- Update TOC for 5.2
+
 1.6
 - Added support for Aurora
 
