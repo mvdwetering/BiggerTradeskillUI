@@ -141,6 +141,7 @@ BTSUiSubClassFilterDropDown:Show()
 BTSUiSubClassFilterDropDownButton:SetHitRectInsets(-110, 0, 0, 0) -- To make Text part of combobox clickable
 
 UIDropDownMenu_SetWidth(BTSUiSubClassFilterDropDown, 115); -- Need to set the width explicitly so text will be truncated correctly
+                                                           -- When changing width also update ElvUI support
 
 -- Slot filter
 if not BTSUiSlotFilterDropDown then
@@ -154,6 +155,7 @@ BTSUiSlotFilterDropDown:Show()
 BTSUiSlotFilterDropDownButton:SetHitRectInsets(-110, 0, 0, 0) -- To make Text part of combobox clickable
 
 UIDropDownMenu_SetWidth(BTSUiSlotFilterDropDown, 115); -- Need to set the width explicitly so text will be truncated correctly
+                                                       -- When changing width also update ElvUI support
 
 -- Add a vertical bar between the recipelist and the details pane
 -- Usually the scrollbar will be over it, but when there is no scrollbar this one shows and looks better

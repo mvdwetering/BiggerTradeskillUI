@@ -6,8 +6,9 @@
 ## URL: http://www.michelvandewetering.nl/warcraft/addons/bigger-tradeskill-ui
 ## LoadOnDemand: 1
 ## LoadWith: Blizzard_TradeSkillUI
-## OptionalDeps: Aurora, FreeUI
+## OptionalDeps: Aurora, FreeUI, ElvUI
 ## DefaultState: Enabled
 
 BiggerTradeSkillUI.lua
 Aurora.lua
+ElvUI.lua
