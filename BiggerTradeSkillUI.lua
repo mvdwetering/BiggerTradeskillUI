@@ -441,13 +441,33 @@ function BTSUi.TradeSkillFrame_SetSelection()
 
 	local anchorTo = TradeSkillDetailHeaderLeft
 	local anchorOffsetX = 5
-	local anchorOffsetY = 5
+	local anchorOffsetY = 10
+
+	-- Add a bit of space for the extra lines that TradeSkillInfo adds
+	-- It adds 2 lines, but the second line is anchored to the first one, so we only have to move that one
+	-- becaus of 2 lines add a bit more Y offset than just for 1 line
+	if (TradeskillInfoSkillText and TradeskillInfoSkillText:IsVisible()) then
+		TradeskillInfoSkillText:ClearAllPoints()
+		TradeskillInfoSkillText:SetPoint("TOPLEFT", anchorTo, "BOTTOMLEFT", anchorOffsetX, anchorOffsetY)
+
+		anchorTo = TradeskillInfoSkillText
+		anchorOffsetX = 0
+		anchorOffsetY = -3
+	end
+	if (TradeskillInfoProfitText and TradeskillInfoProfitText:IsVisible()) then
+		TradeskillInfoProfitText:ClearAllPoints()
+		TradeskillInfoProfitText:SetPoint("TOPLEFT", anchorTo, "BOTTOMLEFT", anchorOffsetX, anchorOffsetY)
+
+		anchorTo = TradeskillInfoProfitText
+		anchorOffsetX = 0
+		anchorOffsetY = -5
+	end
 
 	-- Add Auctionator AH button on the left side so people with small screens can still see it while at the AH
 	-- since the BiggerTradeSkillUI can be partly offscreen then
-	if (Auctionator_Search) then
+	if (Auctionator_Search and Auctionator_Search:IsVisible()) then
 		Auctionator_Search:ClearAllPoints()
-		Auctionator_Search:SetPoint("TOPLEFT", anchorTo, "BOTTOMLEFT", anchorOffsetX, 10)
+		Auctionator_Search:SetPoint("TOPLEFT", anchorTo, "BOTTOMLEFT", anchorOffsetX, anchorOffsetY)
 
 		anchorTo = Auctionator_Search
 		anchorOffsetX = 0

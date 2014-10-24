@@ -1,5 +1,9 @@
 Change history
 
+1.9
+- Update TOC for 6.0
+- Added support for Tradeskill Info
+
 1.8
 - Update TOC for 5.3
 - Added support for ElvUI

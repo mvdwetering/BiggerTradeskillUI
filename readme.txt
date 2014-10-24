@@ -5,6 +5,7 @@ Has support for:
 - Auctionator
 - Aurora
 - ElvUI
+- Tradeskill Info
 
 Works with most tradeskill addons (that work with the default Blizzard UI) like:
 - TradeTabs
