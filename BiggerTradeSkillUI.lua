@@ -357,14 +357,15 @@ end
 
 
 function BTSUi.TradeSkillSubClassDropDown_Initialize()
-	BTSUi.TradeSkillFilterFrame_LoadSubClasses(GetTradeSkillSubClasses());
+	BTSUi.TradeSkillFilterFrame_LoadSubClasses();
 end
 
 
-function BTSUi.TradeSkillFilterFrame_LoadSubClasses(...)
+function BTSUi.TradeSkillFilterFrame_LoadSubClasses()
 	local selectedID = UIDropDownMenu_GetSelectedID(BTSUiSubClassFilterDropDown);
-	local numSubClasses = select("#", ...);
+	local subClasses = { GetTradeSkillSubClasses() };
 	local allChecked = GetTradeSkillSubClasses(0);
+	local index = 1;
 
 	-- the first button in the list is going to be an "all subclasses" button
 	local info = UIDropDownMenu_CreateInfo();
@@ -373,31 +374,45 @@ function BTSUi.TradeSkillFilterFrame_LoadSubClasses(...)
 	info.checked = allChecked and (selectedID == nil or selectedID == 1);
 	info.value = 0;
 	UIDropDownMenu_AddButton(info);
+	index = index + 1;
+
 	if ( info.checked ) then
 		UIDropDownMenu_SetText(BTSUiSubClassFilterDropDown, ALL_SUBCLASSES);
 	end
 
 	-- Add buttons for each subclass
-	local checked;
+	for i, subClass in pairs(subClasses) do
 
-	for i=1, select("#", ...), 1 do
-		-- if there are no filters then don't check any individual subclasses
-		if (allChecked) then
-			checked = nil;
-		else
-			checked = GetTradeSkillSubClasses(i);
-			if ( checked ) then
-				UIDropDownMenu_SetText(BTSUiSubClassFilterDropDown, select(i, ...));
-			end
-		end
-		info.text = select(i, ...);
-		info.func = BTSUi.TradeSkillSubClassDropDownButton_OnClick;
-		info.checked = checked;
+		info = UIDropDownMenu_CreateInfo();
+		info.text = subClass;
+		info.func =  function() 
+						BTSUi.TradeSkillSetFilter(i, 0, subClass, "", 0); 
+						UIDropDownMenu_SetSelectedID(BTSUiSubClassFilterDropDown, index);
+						UIDropDownMenu_SetText(BTSUiSubClassFilterDropDown, subClass);
+					end;
+		info.checked = TradeSkillFrame.filterTbl.subClassValue == i and TradeSkillFrame.filterTbl.subClassText == subClass;
 		info.value = i;
+		UIDropDownMenu_AddButton(info);
+		index = index + 1;
 
-		if (info.text) then -- The subclasses like "Everyday Cooking" that Pandaren Cuisine has returns nil on the text. Don't add those
+		-- Add subslots if available
+		local subslots = { GetTradeSkillSubCategories(i) };
+		for j,subslot in pairs(subslots) do
+
+			info = UIDropDownMenu_CreateInfo();
+			info.text = "   "..subslot;
+			info.func =  function() 
+							--TradeSkillFrame.filterTbl.subClassText = subClass.."-"..subslot
+							--TradeSkillSetFilter(i, 0, nil, subslots[j], j); 
+							BTSUi.TradeSkillSetFilter(i, 0, "... "..subslot, subslot, j); 
+							UIDropDownMenu_SetSelectedID(BTSUiSubClassFilterDropDown, index);
+							UIDropDownMenu_SetText(BTSUiSubClassFilterDropDown, subslot);
+						end
+			info.checked = TradeSkillFrame.filterTbl.subClassValue == i and TradeSkillFrame.filterTbl.subClassText == "... "..subslot;
+			info.value = {i, j};
 			UIDropDownMenu_AddButton(info);
-		end
+			index = index + 1;
+		end	
 	end
 end
 
