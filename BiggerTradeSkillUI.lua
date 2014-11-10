@@ -1,6 +1,6 @@
 local addonName, BTSUi = ...
 
-TRADE_SKILLS_DISPLAYED = 25
+TRADE_SKILLS_DISPLAYED = 26
 
 
 -- Add skill buttons if needed
@@ -15,7 +15,7 @@ end
 
 -- Resize the main window
 TradeSkillFrame:SetWidth(550)
-TradeSkillFrame:SetHeight(525)
+TradeSkillFrame:SetHeight(114 + (TRADE_SKILLS_DISPLAYED * 16))
 
 -- Hide Horizontal bar in the default UI
 TradeSkillHorizontalBarLeft:Hide()
