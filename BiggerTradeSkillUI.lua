@@ -493,6 +493,13 @@ function BTSUi.TradeSkillFrame_SetSelection()
 	if (TradeSkillSkillCooldown:GetText()) then
 		TradeSkillSkillCooldown:SetPoint("TOPLEFT", anchorTo, "BOTTOMLEFT", anchorOffsetX, anchorOffsetY+5) -- +5 looks better
 
+		-- For some reason the default wrapping does not work properly
+		-- e.g. the "2" from "Requires Engineering Works Level 2" disappears
+		-- Apply settings below to fix that
+		TradeSkillSkillCooldown:SetWidth(183)
+		-- Also text is centered over multiple lines for some reason
+		TradeSkillSkillCooldown:SetJustifyH("LEFT")
+
 		anchorTo = TradeSkillSkillCooldown
 		anchorOffsetX = 0
 		anchorOffsetY = -15
