@@ -469,6 +469,7 @@ function BTSUi.TradeSkillFrame_SetSelection()
 		anchorOffsetX = 0
 		anchorOffsetY = -3
 	end
+
 	if (TradeskillInfoProfitText and TradeskillInfoProfitText:IsVisible()) then
 		TradeskillInfoProfitText:ClearAllPoints()
 		TradeskillInfoProfitText:SetPoint("TOPLEFT", anchorTo, "BOTTOMLEFT", anchorOffsetX, anchorOffsetY)
@@ -491,6 +492,7 @@ function BTSUi.TradeSkillFrame_SetSelection()
 
 	-- Cooldown
 	if (TradeSkillSkillCooldown:GetText()) then
+        TradeSkillSkillCooldown:ClearAllPoints()
 		TradeSkillSkillCooldown:SetPoint("TOPLEFT", anchorTo, "BOTTOMLEFT", anchorOffsetX, anchorOffsetY+5) -- +5 looks better
 
 		-- For some reason the default wrapping does not work properly
