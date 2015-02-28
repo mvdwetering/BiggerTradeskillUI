@@ -1,21 +1,301 @@
 local addonName, BTSUi = ...
 
+BTSUI_TRADESKILLFRAME_WIDTH   = 550
+BTSUI_TRADESKILLBUTTON_HEIGHT = 16
+
 TRADE_SKILLS_DISPLAYED = 26
 
+-- Settings defaults
+BiggerTradeSkillUiDB = {}
+BiggerTradeSkillUiDB.height = 114 + (TRADE_SKILLS_DISPLAYED * 16)
 
--- Add skill buttons if needed
-for i=1, TRADE_SKILLS_DISPLAYED do
-	if (not _G["TradeSkillSkill"..i]) then
-		-- Create a new button
-		local newSkillButton = CreateFrame("Button", "TradeSkillSkill"..i, TradeSkillSkill1:GetParent(), "TradeSkillSkillButtonTemplate")
-		newSkillButton:SetPoint("TOPLEFT", _G["TradeSkillSkill"..(i-1)], "BOTTOMLEFT")
+
+-- Functions for dropdowns, these are based on the old (3.3.5 patch) Blizzard code
+-- Changes are mostly updates to use TradeSkillSetFilter to get the new Filterbar working
+
+function BTSUi.TradeSkillInvSlotDropDown_Initialize()
+	BTSUi.TradeSkillFilterFrame_LoadInvSlots(GetTradeSkillSubClassFilteredSlots(0));
+end
+
+
+function BTSUi.TradeSkillFilterFrame_LoadInvSlots(...)
+	local allChecked = GetTradeSkillInvSlotFilter(0);
+	local filterCount = select("#", ...);
+
+	local info = UIDropDownMenu_CreateInfo();
+
+	info.text = ALL_INVENTORY_SLOTS;
+	info.func = BTSUi.TradeSkillInvSlotDropDownButton_OnClick;
+	info.checked = allChecked;
+
+	UIDropDownMenu_AddButton(info);
+
+	local checked;
+	for i=1, filterCount, 1 do
+		if ( allChecked and filterCount > 1 ) then
+			UIDropDownMenu_SetText(BTSUiSlotFilterDropDown, ALL_INVENTORY_SLOTS);
+		else
+			checked = GetTradeSkillInvSlotFilter(i);
+			if ( checked ) then
+				UIDropDownMenu_SetText(BTSUiSlotFilterDropDown, select(i, ...));
+			end
+		end
+
+		info.text = select(i, ...);
+		info.func = BTSUi.TradeSkillInvSlotDropDownButton_OnClick;
+		info.checked = checked;
+
+		UIDropDownMenu_AddButton(info);
 	end
-end   
+end
 
+
+function BTSUi.TradeSkillFilterFrame_InvSlotName(...)
+	for i=1, select("#", ...), 1 do
+		if ( GetTradeSkillInvSlotFilter(i) ) then
+			return select(i, ...);
+		end
+	end
+end
+
+
+function BTSUi.TradeSkillInvSlotDropDownButton_OnClick(self)
+	local selectedId = self:GetID()
+	local selectedName = self:GetText()
+
+	UIDropDownMenu_SetSelectedID(BTSUiSlotFilterDropDown, selectedId);
+
+	-- The other dropdown goes back to the "All xxx" option
+	UIDropDownMenu_SetSelectedID(BTSUiSubClassFilterDropDown, 1);
+	UIDropDownMenu_SetText(BTSUiSubClassFilterDropDown, ALL_SUBCLASSES);
+
+	BTSUi.TradeSkillSetFilter(0, selectedId-1, "", selectedName)
+end
+
+
+function BTSUi.TradeSkillSetFilter(selectedSubclassId, selectedSlotId, selectedSubclassName, selectedSlotName, subclassCategory)
+--print(selectedSubclassId, "-", selectedSlotId, "-", selectedSubclassName, "-", selectedSlotName, "-", subclassCategory)
+	TradeSkillSetFilter(selectedSubclassId, selectedSlotId, selectedSubclassName, selectedSlotName, subclassCategory)
+end
+
+
+function BTSUi.TradeSkillSubClassDropDown_Initialize()
+	BTSUi.TradeSkillFilterFrame_LoadSubClasses();
+end
+
+
+function BTSUi.TradeSkillFilterFrame_LoadSubClasses()
+	local selectedID = UIDropDownMenu_GetSelectedID(BTSUiSubClassFilterDropDown);
+	local subClasses = { GetTradeSkillSubClasses() };
+	local allChecked = GetTradeSkillSubClasses(0);
+	local index = 1;
+
+	-- the first button in the list is going to be an "all subclasses" button
+	local info = UIDropDownMenu_CreateInfo();
+	info.text = ALL_SUBCLASSES;
+	info.func = BTSUi.TradeSkillSubClassDropDownButton_OnClick;
+	info.checked = allChecked and (selectedID == nil or selectedID == 1);
+	info.value = 0;
+	UIDropDownMenu_AddButton(info);
+	index = index + 1;
+
+	if ( info.checked ) then
+		UIDropDownMenu_SetText(BTSUiSubClassFilterDropDown, ALL_SUBCLASSES);
+	end
+
+	-- Add buttons for each subclass
+	for i, subClass in pairs(subClasses) do
+
+		info = UIDropDownMenu_CreateInfo();
+		info.text = subClass;
+		info.func =  function() 
+						BTSUi.TradeSkillSetFilter(i, 0, subClass, "", 0); 
+						UIDropDownMenu_SetSelectedID(BTSUiSubClassFilterDropDown, index);
+						UIDropDownMenu_SetText(BTSUiSubClassFilterDropDown, subClass);
+					end;
+		info.checked = TradeSkillFrame.filterTbl.subClassValue == i and TradeSkillFrame.filterTbl.subClassText == subClass;
+		info.value = i;
+		UIDropDownMenu_AddButton(info);
+		index = index + 1;
+
+		-- Add subslots if available
+		local subslots = { GetTradeSkillSubCategories(i) };
+		for j,subslot in pairs(subslots) do
+
+			info = UIDropDownMenu_CreateInfo();
+			info.text = "   "..subslot;
+			info.func =  function() 
+							--TradeSkillFrame.filterTbl.subClassText = subClass.."-"..subslot
+							--TradeSkillSetFilter(i, 0, nil, subslots[j], j); 
+							BTSUi.TradeSkillSetFilter(i, 0, "... "..subslot, subslot, j); 
+							UIDropDownMenu_SetSelectedID(BTSUiSubClassFilterDropDown, index);
+							UIDropDownMenu_SetText(BTSUiSubClassFilterDropDown, subslot);
+						end
+			info.checked = TradeSkillFrame.filterTbl.subClassValue == i and TradeSkillFrame.filterTbl.subClassText == "... "..subslot;
+			info.value = {i, j};
+			UIDropDownMenu_AddButton(info);
+			index = index + 1;
+		end	
+	end
+end
+
+
+function BTSUi.TradeSkillSubClassDropDownButton_OnClick(self)
+	UIDropDownMenu_SetSelectedID(BTSUiSubClassFilterDropDown, self:GetID());
+
+	-- The other dropdown goes back to the "All xxx" option
+	UIDropDownMenu_SetSelectedID(BTSUiSlotFilterDropDown, 1);
+	UIDropDownMenu_SetText(BTSUiSlotFilterDropDown, ALL_INVENTORY_SLOTS);
+
+	BTSUi.TradeSkillSetFilter(self.value, 0, self:GetText(), "", 0)
+end
+
+
+-- This is needed to detect switching between professions and resetting the slot/subclass filters
+-- so that no invalid values are selected (for example Plate on the Firstaid profession when switching from BS)
+-- Also taken from the old code btw
+function BTSUi.TradeSkillFrame_Update()
+	local name, rank, maxRank = GetTradeSkillLine();
+			
+	if ( BTSUi.CURRENT_TRADESKILL ~= name ) then
+--		StopTradeSkillRepeat();
+
+		if ( BTSUi.CURRENT_TRADESKILL ~= "" ) then
+			-- To fix problem with switching between two tradeskills
+			UIDropDownMenu_Initialize(BTSUiSlotFilterDropDown, BTSUi.TradeSkillInvSlotDropDown_Initialize)
+			UIDropDownMenu_SetSelectedID(BTSUiSlotFilterDropDown, 1);
+
+			UIDropDownMenu_Initialize(BTSUiSubClassFilterDropDown, BTSUi.TradeSkillSubClassDropDown_Initialize)
+			UIDropDownMenu_SetSelectedID(BTSUiSubClassFilterDropDown, 1);
+		end
+		BTSUi.CURRENT_TRADESKILL = name;
+	end
+end
+
+
+-- Controls get reanchored in the TradeSkillFrame_SetSelection function
+-- Basically reanchor everything in the detail frame to my liking
+function BTSUi.TradeSkillFrame_SetSelection()
+
+	local anchorTo = TradeSkillDetailHeaderLeft
+	local anchorOffsetX = 5
+	local anchorOffsetY = 10
+
+	-- Add a bit of space for the extra lines that TradeSkillInfo adds
+	-- It adds 2 lines, but the second line is anchored to the first one, so we only have to move that one
+	-- becaus of 2 lines add a bit more Y offset than just for 1 line
+	if (TradeskillInfoSkillText and TradeskillInfoSkillText:IsVisible()) then
+		TradeskillInfoSkillText:ClearAllPoints()
+		TradeskillInfoSkillText:SetPoint("TOPLEFT", anchorTo, "BOTTOMLEFT", anchorOffsetX, anchorOffsetY)
+
+		anchorTo = TradeskillInfoSkillText
+		anchorOffsetX = 0
+		anchorOffsetY = -3
+	end
+
+	if (TradeskillInfoProfitText and TradeskillInfoProfitText:IsVisible()) then
+		TradeskillInfoProfitText:ClearAllPoints()
+		TradeskillInfoProfitText:SetPoint("TOPLEFT", anchorTo, "BOTTOMLEFT", anchorOffsetX, anchorOffsetY)
+
+		anchorTo = TradeskillInfoProfitText
+		anchorOffsetX = 0
+		anchorOffsetY = -5
+	end
+
+	-- Add Auctionator AH button on the left side so people with small screens can still see it while at the AH
+	-- since the BiggerTradeSkillUI can be partly offscreen then
+	if (Auctionator_Search and Auctionator_Search:IsVisible()) then
+		Auctionator_Search:ClearAllPoints()
+		Auctionator_Search:SetPoint("TOPLEFT", anchorTo, "BOTTOMLEFT", anchorOffsetX, anchorOffsetY)
+
+		anchorTo = Auctionator_Search
+		anchorOffsetX = 0
+		anchorOffsetY = -10
+	end
+
+	-- Cooldown
+	if (TradeSkillSkillCooldown:GetText()) then
+        TradeSkillSkillCooldown:ClearAllPoints()
+		TradeSkillSkillCooldown:SetPoint("TOPLEFT", anchorTo, "BOTTOMLEFT", anchorOffsetX, anchorOffsetY+5) -- +5 looks better
+
+		-- For some reason the default wrapping does not work properly
+		-- e.g. the "2" from "Requires Engineering Works Level 2" disappears
+		-- Apply settings below to fix that
+		TradeSkillSkillCooldown:SetWidth(183)
+		-- Also text is centered over multiple lines for some reason
+		TradeSkillSkillCooldown:SetJustifyH("LEFT")
+
+		anchorTo = TradeSkillSkillCooldown
+		anchorOffsetX = 0
+		anchorOffsetY = -15
+	end
+
+	-- Description
+	if (strlen(TradeSkillDescription:GetText()) <= 2) then  -- <= 2 because there is the text " " in it when empty
+		TradeSkillDescription:Hide()
+	else
+		TradeSkillDescription:Show()
+		TradeSkillDescription:SetPoint("TOPLEFT", anchorTo, "BOTTOMLEFT", anchorOffsetX, anchorOffsetY)
+
+		anchorTo = TradeSkillDescription
+		anchorOffsetX = 0
+		anchorOffsetY = -15
+	end
+
+	-- Requirements
+	if (TradeSkillRequirementText:GetText()) then
+		TradeSkillRequirementLabel:SetPoint("TOPLEFT", anchorTo, "BOTTOMLEFT", anchorOffsetX, anchorOffsetY)
+
+		anchorTo = TradeSkillRequirementText
+		anchorOffsetX = 0
+		anchorOffsetY = -15
+	end
+
+	-- Reagents
+	TradeSkillReagentLabel:SetPoint("TOPLEFT", anchorTo, "BOTTOMLEFT", anchorOffsetX, anchorOffsetY)
+end
+
+
+-- Recalculate the amount of items that fit and update the buttons when the height changed
+function BTSUi.HeightUpdated()
+    local height = TradeSkillFrame:GetHeight()
+
+    -- Save the new height
+    BiggerTradeSkillUiDB.height = height
+
+    -- Calculates the amount of items that fit the height of the window
+    -- +0.15 to tune the moment when the tradeskill button disappears
+    TRADE_SKILLS_DISPLAYED = math.floor(( (height - 114) / BTSUI_TRADESKILLBUTTON_HEIGHT ) + 0.15 )
+
+    -- Show skill buttons and add if needed
+    for i=1, TRADE_SKILLS_DISPLAYED do
+        if (not _G["TradeSkillSkill"..i]) then
+             -- Create a new button
+             local newSkillButton = CreateFrame("Button", "TradeSkillSkill"..i, TradeSkillSkill1:GetParent(), "TradeSkillSkillButtonTemplate")
+             newSkillButton:SetPoint("TOPLEFT", _G["TradeSkillSkill"..(i-1)], "BOTTOMLEFT")
+        end
+
+        _G["TradeSkillSkill"..i]:Show()
+    end   
+
+    -- Hide buttons
+    local i = TRADE_SKILLS_DISPLAYED + 1
+    while _G["TradeSkillSkill"..i] do
+        _G["TradeSkillSkill"..i]:Hide()
+        i = i + 1
+    end
+   
+    -- Need to update the Tradeskill window to fill any buttons that are new or were previously hidden
+    TradeSkillFrame_Update()
+end
+
+
+-- ### Start of setup ###
 
 -- Resize the main window
-TradeSkillFrame:SetWidth(550)
-TradeSkillFrame:SetHeight(114 + (TRADE_SKILLS_DISPLAYED * 16))
+TradeSkillFrame:SetWidth(BTSUI_TRADESKILLFRAME_WIDTH)
+TradeSkillFrame:SetHeight(BiggerTradeSkillUiDB.height)
+BTSUi.HeightUpdated()
 
 -- Hide Horizontal bar in the default UI
 TradeSkillHorizontalBarLeft:Hide()
@@ -286,253 +566,6 @@ TradeSkillCreateAllButton:ClearAllPoints()
 TradeSkillCreateAllButton:SetPoint("BOTTOMLEFT", TradeSkillFrame, "BOTTOMLEFT", 216, 4)
 
 
-
--- Functions for dropdowns, these are based on the old (3.3.5 patch) Blizzard code
--- Changes are mostly updates to use TradeSkillSetFilter to get the new Filterbar working
-
-function BTSUi.TradeSkillInvSlotDropDown_Initialize()
-	BTSUi.TradeSkillFilterFrame_LoadInvSlots(GetTradeSkillSubClassFilteredSlots(0));
-end
-
-
-function BTSUi.TradeSkillFilterFrame_LoadInvSlots(...)
-	local allChecked = GetTradeSkillInvSlotFilter(0);
-	local filterCount = select("#", ...);
-
-	local info = UIDropDownMenu_CreateInfo();
-
-	info.text = ALL_INVENTORY_SLOTS;
-	info.func = BTSUi.TradeSkillInvSlotDropDownButton_OnClick;
-	info.checked = allChecked;
-
-	UIDropDownMenu_AddButton(info);
-
-	local checked;
-	for i=1, filterCount, 1 do
-		if ( allChecked and filterCount > 1 ) then
-			UIDropDownMenu_SetText(BTSUiSlotFilterDropDown, ALL_INVENTORY_SLOTS);
-		else
-			checked = GetTradeSkillInvSlotFilter(i);
-			if ( checked ) then
-				UIDropDownMenu_SetText(BTSUiSlotFilterDropDown, select(i, ...));
-			end
-		end
-
-		info.text = select(i, ...);
-		info.func = BTSUi.TradeSkillInvSlotDropDownButton_OnClick;
-		info.checked = checked;
-
-		UIDropDownMenu_AddButton(info);
-	end
-end
-
-
-function BTSUi.TradeSkillFilterFrame_InvSlotName(...)
-	for i=1, select("#", ...), 1 do
-		if ( GetTradeSkillInvSlotFilter(i) ) then
-			return select(i, ...);
-		end
-	end
-end
-
-
-function BTSUi.TradeSkillInvSlotDropDownButton_OnClick(self)
-	local selectedId = self:GetID()
-	local selectedName = self:GetText()
-
-	UIDropDownMenu_SetSelectedID(BTSUiSlotFilterDropDown, selectedId);
-
-	-- The other dropdown goes back to the "All xxx" option
-	UIDropDownMenu_SetSelectedID(BTSUiSubClassFilterDropDown, 1);
-	UIDropDownMenu_SetText(BTSUiSubClassFilterDropDown, ALL_SUBCLASSES);
-
-	BTSUi.TradeSkillSetFilter(0, selectedId-1, "", selectedName)
-end
-
-
-function BTSUi.TradeSkillSetFilter(selectedSubclassId, selectedSlotId, selectedSubclassName, selectedSlotName, subclassCategory)
---print(selectedSubclassId, "-", selectedSlotId, "-", selectedSubclassName, "-", selectedSlotName, "-", subclassCategory)
-	TradeSkillSetFilter(selectedSubclassId, selectedSlotId, selectedSubclassName, selectedSlotName, subclassCategory)
-end
-
-
-function BTSUi.TradeSkillSubClassDropDown_Initialize()
-	BTSUi.TradeSkillFilterFrame_LoadSubClasses();
-end
-
-
-function BTSUi.TradeSkillFilterFrame_LoadSubClasses()
-	local selectedID = UIDropDownMenu_GetSelectedID(BTSUiSubClassFilterDropDown);
-	local subClasses = { GetTradeSkillSubClasses() };
-	local allChecked = GetTradeSkillSubClasses(0);
-	local index = 1;
-
-	-- the first button in the list is going to be an "all subclasses" button
-	local info = UIDropDownMenu_CreateInfo();
-	info.text = ALL_SUBCLASSES;
-	info.func = BTSUi.TradeSkillSubClassDropDownButton_OnClick;
-	info.checked = allChecked and (selectedID == nil or selectedID == 1);
-	info.value = 0;
-	UIDropDownMenu_AddButton(info);
-	index = index + 1;
-
-	if ( info.checked ) then
-		UIDropDownMenu_SetText(BTSUiSubClassFilterDropDown, ALL_SUBCLASSES);
-	end
-
-	-- Add buttons for each subclass
-	for i, subClass in pairs(subClasses) do
-
-		info = UIDropDownMenu_CreateInfo();
-		info.text = subClass;
-		info.func =  function() 
-						BTSUi.TradeSkillSetFilter(i, 0, subClass, "", 0); 
-						UIDropDownMenu_SetSelectedID(BTSUiSubClassFilterDropDown, index);
-						UIDropDownMenu_SetText(BTSUiSubClassFilterDropDown, subClass);
-					end;
-		info.checked = TradeSkillFrame.filterTbl.subClassValue == i and TradeSkillFrame.filterTbl.subClassText == subClass;
-		info.value = i;
-		UIDropDownMenu_AddButton(info);
-		index = index + 1;
-
-		-- Add subslots if available
-		local subslots = { GetTradeSkillSubCategories(i) };
-		for j,subslot in pairs(subslots) do
-
-			info = UIDropDownMenu_CreateInfo();
-			info.text = "   "..subslot;
-			info.func =  function() 
-							--TradeSkillFrame.filterTbl.subClassText = subClass.."-"..subslot
-							--TradeSkillSetFilter(i, 0, nil, subslots[j], j); 
-							BTSUi.TradeSkillSetFilter(i, 0, "... "..subslot, subslot, j); 
-							UIDropDownMenu_SetSelectedID(BTSUiSubClassFilterDropDown, index);
-							UIDropDownMenu_SetText(BTSUiSubClassFilterDropDown, subslot);
-						end
-			info.checked = TradeSkillFrame.filterTbl.subClassValue == i and TradeSkillFrame.filterTbl.subClassText == "... "..subslot;
-			info.value = {i, j};
-			UIDropDownMenu_AddButton(info);
-			index = index + 1;
-		end	
-	end
-end
-
-
-function BTSUi.TradeSkillSubClassDropDownButton_OnClick(self)
-	UIDropDownMenu_SetSelectedID(BTSUiSubClassFilterDropDown, self:GetID());
-
-	-- The other dropdown goes back to the "All xxx" option
-	UIDropDownMenu_SetSelectedID(BTSUiSlotFilterDropDown, 1);
-	UIDropDownMenu_SetText(BTSUiSlotFilterDropDown, ALL_INVENTORY_SLOTS);
-
-	BTSUi.TradeSkillSetFilter(self.value, 0, self:GetText(), "", 0)
-end
-
-
--- This is needed to detect switching between professions and resetting the slot/subclass filters
--- so that no invalid values are selected (for example Plate on the Firstaid profession when switching from BS)
--- Also taken from the old code btw
-function BTSUi.TradeSkillFrame_Update()
-	local name, rank, maxRank = GetTradeSkillLine();
-			
-	if ( BTSUi.CURRENT_TRADESKILL ~= name ) then
---		StopTradeSkillRepeat();
-
-		if ( BTSUi.CURRENT_TRADESKILL ~= "" ) then
-			-- To fix problem with switching between two tradeskills
-			UIDropDownMenu_Initialize(BTSUiSlotFilterDropDown, BTSUi.TradeSkillInvSlotDropDown_Initialize)
-			UIDropDownMenu_SetSelectedID(BTSUiSlotFilterDropDown, 1);
-
-			UIDropDownMenu_Initialize(BTSUiSubClassFilterDropDown, BTSUi.TradeSkillSubClassDropDown_Initialize)
-			UIDropDownMenu_SetSelectedID(BTSUiSubClassFilterDropDown, 1);
-		end
-		BTSUi.CURRENT_TRADESKILL = name;
-	end
-end
-
-
--- Controls get reanchored in the TradeSkillFrame_SetSelection function
--- Basically reanchor everything in the detail frame to my liking
-function BTSUi.TradeSkillFrame_SetSelection()
-
-	local anchorTo = TradeSkillDetailHeaderLeft
-	local anchorOffsetX = 5
-	local anchorOffsetY = 10
-
-	-- Add a bit of space for the extra lines that TradeSkillInfo adds
-	-- It adds 2 lines, but the second line is anchored to the first one, so we only have to move that one
-	-- becaus of 2 lines add a bit more Y offset than just for 1 line
-	if (TradeskillInfoSkillText and TradeskillInfoSkillText:IsVisible()) then
-		TradeskillInfoSkillText:ClearAllPoints()
-		TradeskillInfoSkillText:SetPoint("TOPLEFT", anchorTo, "BOTTOMLEFT", anchorOffsetX, anchorOffsetY)
-
-		anchorTo = TradeskillInfoSkillText
-		anchorOffsetX = 0
-		anchorOffsetY = -3
-	end
-
-	if (TradeskillInfoProfitText and TradeskillInfoProfitText:IsVisible()) then
-		TradeskillInfoProfitText:ClearAllPoints()
-		TradeskillInfoProfitText:SetPoint("TOPLEFT", anchorTo, "BOTTOMLEFT", anchorOffsetX, anchorOffsetY)
-
-		anchorTo = TradeskillInfoProfitText
-		anchorOffsetX = 0
-		anchorOffsetY = -5
-	end
-
-	-- Add Auctionator AH button on the left side so people with small screens can still see it while at the AH
-	-- since the BiggerTradeSkillUI can be partly offscreen then
-	if (Auctionator_Search and Auctionator_Search:IsVisible()) then
-		Auctionator_Search:ClearAllPoints()
-		Auctionator_Search:SetPoint("TOPLEFT", anchorTo, "BOTTOMLEFT", anchorOffsetX, anchorOffsetY)
-
-		anchorTo = Auctionator_Search
-		anchorOffsetX = 0
-		anchorOffsetY = -10
-	end
-
-	-- Cooldown
-	if (TradeSkillSkillCooldown:GetText()) then
-        TradeSkillSkillCooldown:ClearAllPoints()
-		TradeSkillSkillCooldown:SetPoint("TOPLEFT", anchorTo, "BOTTOMLEFT", anchorOffsetX, anchorOffsetY+5) -- +5 looks better
-
-		-- For some reason the default wrapping does not work properly
-		-- e.g. the "2" from "Requires Engineering Works Level 2" disappears
-		-- Apply settings below to fix that
-		TradeSkillSkillCooldown:SetWidth(183)
-		-- Also text is centered over multiple lines for some reason
-		TradeSkillSkillCooldown:SetJustifyH("LEFT")
-
-		anchorTo = TradeSkillSkillCooldown
-		anchorOffsetX = 0
-		anchorOffsetY = -15
-	end
-
-	-- Description
-	if (strlen(TradeSkillDescription:GetText()) <= 2) then  -- <= 2 because there is the text " " in it when empty
-		TradeSkillDescription:Hide()
-	else
-		TradeSkillDescription:Show()
-		TradeSkillDescription:SetPoint("TOPLEFT", anchorTo, "BOTTOMLEFT", anchorOffsetX, anchorOffsetY)
-
-		anchorTo = TradeSkillDescription
-		anchorOffsetX = 0
-		anchorOffsetY = -15
-	end
-
-	-- Requirements
-	if (TradeSkillRequirementText:GetText()) then
-		TradeSkillRequirementLabel:SetPoint("TOPLEFT", anchorTo, "BOTTOMLEFT", anchorOffsetX, anchorOffsetY)
-
-		anchorTo = TradeSkillRequirementText
-		anchorOffsetX = 0
-		anchorOffsetY = -15
-	end
-
-	-- Reagents
-	TradeSkillReagentLabel:SetPoint("TOPLEFT", anchorTo, "BOTTOMLEFT", anchorOffsetX, anchorOffsetY)
-end
-
-
 -- Hook functions
 hooksecurefunc("TradeSkillFrame_Update", BTSUi.TradeSkillFrame_Update)
 hooksecurefunc("TradeSkillFrame_SetSelection", BTSUi.TradeSkillFrame_SetSelection)
@@ -557,3 +590,83 @@ TradeSkillFilterBarExitButton:SetScript("OnHide", function(...)
 end
 )
 
+-- Setup resizing parameters and overlay
+
+TradeSkillFrame:SetScript("OnSizeChanged",OnSizeChanged);
+TradeSkillFrame:SetResizable(true);
+TradeSkillFrame:SetClampedToScreen(true)
+TradeSkillFrame:SetMinResize(BTSUI_TRADESKILLFRAME_WIDTH, 420)
+TradeSkillFrame:SetMaxResize(BTSUI_TRADESKILLFRAME_WIDTH, 700) -- This will also be set in the OnShow of the overlay, but make sure a default has been setup already
+TradeSkillFrame:SetScript("OnSizeChanged", function(self) BTSUi.HeightUpdated() end)
+
+-- Overlay is also the drag handle
+-- It is positioned at the bottom edge of the TradeSkillFrame
+BTSUiResizeOverlay = CreateFrame("Frame", "BTSUiResizeOverlay", TradeSkillFrame)
+
+BTSUiResizeOverlay:SetPoint("BOTTOMLEFT",6,-1)
+BTSUiResizeOverlay:SetPoint("BOTTOMRIGHT",-6,0)
+BTSUiResizeOverlay:SetHeight(6)
+BTSUiResizeOverlay:RegisterForDrag("LeftButton");
+BTSUiResizeOverlay:EnableMouse(true);
+BTSUiResizeOverlay:SetClampedToScreen(true)
+BTSUiResizeOverlay:Show()
+
+BTSUiResizeOverlayTexture = BTSUiResizeOverlay:CreateTexture("BTSUiResizeOverlayTexture", "BACKGROUND")
+BTSUiResizeOverlayTexture:SetTexture("Interface\\BUTTONS\\WHITE8X8.blp")
+BTSUiResizeOverlayTexture:SetAllPoints(BTSUiResizeOverlay)
+BTSUiResizeOverlayTexture:SetBlendMode("BLEND")
+BTSUiResizeOverlayTexture:SetVertexColor(0.5,0.51,0)
+BTSUiResizeOverlayTexture:SetAlpha(0.0)
+
+BTSUiResizeOverlay.overlayTexture = BTSUiResizeOverlayTexture
+
+BTSUiResizeOverlay:SetScript("OnShow", function(self) 
+        local top = TradeSkillFrame:GetTop()
+        local height = TradeSkillFrame:GetHeight()
+
+        -- Make sure the window fits on the screen (e.g. after resolution change)
+        if height > top - 10 then
+          TradeSkillFrame:SetHeight(top-10)
+        end
+	end)
+
+BTSUiResizeOverlay:SetScript("OnEnter", function(self) self.overlayTexture:SetAlpha(0.6) end);
+BTSUiResizeOverlay:SetScript("OnLeave", function(self) self.overlayTexture:SetAlpha(0.0) end);
+
+BTSUiResizeOverlay:SetScript("OnMouseDown", function(self)
+       local top = TradeSkillFrame:GetTop()
+       TradeSkillFrame:SetMaxResize(BTSUI_TRADESKILLFRAME_WIDTH, top - 10 )
+       TradeSkillFrame:StartSizing();
+       self.isResizing = true;
+    end)
+
+BTSUiResizeOverlay:SetScript("OnMouseUp", function(self)
+       if ( self.isResizing ) then
+          TradeSkillFrame:StopMovingOrSizing();
+          self.overlayTexture:SetAlpha(0.0)
+          self.isResizing = false;
+       end
+    end)
+
+BTSUiResizeOverlay:SetScript("OnHide", function(self)      
+       if ( self.isResizing ) then
+          TradeSkillFrame:StopMovingOrSizing();
+          self.overlayTexture:SetAlpha(0.0)
+          self.isResizing = false;
+       end
+    end)
+
+    
+-- Event handling, use the ResizeOverlay frame since we already have that   
+    
+BTSUiResizeOverlay:RegisterEvent("ADDON_LOADED");
+
+BTSUiResizeOverlay:SetScript("OnEvent", function (self, event, ...)
+        if ( event == "ADDON_LOADED") then
+            local name = ...
+            if (name == addonName) then
+                TradeSkillFrame:SetHeight(BiggerTradeSkillUiDB.height)
+                BTSUi.HeightUpdated()
+            end
+        end
+    end)
