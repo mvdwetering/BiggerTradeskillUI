@@ -268,7 +268,9 @@ function BTSUi.HeightUpdated()
     TRADE_SKILLS_DISPLAYED = math.floor(( (height - 114) / BTSUI_TRADESKILLBUTTON_HEIGHT ) + 0.15 )
 
     -- Show skill buttons and add if needed
-    for i=1, TRADE_SKILLS_DISPLAYED do
+    -- Start at 2 so we don't sohw the button that is behind the filterbar when it is visible
+    --   button 1 always exists, don't mess with the visiblity here so it can be managed by the Blizzard code.
+    for i=2, TRADE_SKILLS_DISPLAYED do
         if (not _G["TradeSkillSkill"..i]) then
              -- Create a new button
              local newSkillButton = CreateFrame("Button", "TradeSkillSkill"..i, TradeSkillSkill1:GetParent(), "TradeSkillSkillButtonTemplate")
@@ -276,8 +278,8 @@ function BTSUi.HeightUpdated()
         end
 
         _G["TradeSkillSkill"..i]:Show()
-    end   
-
+    end
+    
     -- Hide buttons
     local i = TRADE_SKILLS_DISPLAYED + 1
     while _G["TradeSkillSkill"..i] do
@@ -631,6 +633,7 @@ BTSUiResizeOverlay:SetScript("OnShow", function(self)
 	end)
 
 BTSUiResizeOverlay:SetScript("OnEnter", function(self) self.overlayTexture:SetAlpha(0.6) end);
+
 BTSUiResizeOverlay:SetScript("OnLeave", function(self) self.overlayTexture:SetAlpha(0.0) end);
 
 BTSUiResizeOverlay:SetScript("OnMouseDown", function(self)
