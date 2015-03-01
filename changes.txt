@@ -1,5 +1,11 @@
 Change history
 
+1.10
+- Update TOC for 6.1
+- Fixes for 6.1
+- The height of the TradeSkill UI can now be changed by dragging the bottom border of the window
+- Minor layout fixes
+
 1.9
 - Update TOC for 6.0
 - Added support for Tradeskill Info
