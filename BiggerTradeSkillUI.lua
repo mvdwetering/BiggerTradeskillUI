@@ -268,7 +268,7 @@ function BTSUi.HeightUpdated()
     TRADE_SKILLS_DISPLAYED = math.floor(( (height - 114) / BTSUI_TRADESKILLBUTTON_HEIGHT ) + 0.15 )
 
     -- Show skill buttons and add if needed
-    -- Start at 2 so we don't sohw the button that is behind the filterbar when it is visible
+    -- Start at 2 so we don't show the button that is behind the filterbar when it is visible
     --   button 1 always exists, don't mess with the visiblity here so it can be managed by the Blizzard code.
     for i=2, TRADE_SKILLS_DISPLAYED do
         if (not _G["TradeSkillSkill"..i]) then
@@ -310,58 +310,6 @@ TradeSkillRankFrame:SetPoint("TOPRIGHT", TradeSkillRankFrame:GetParent(), "TOPRI
 TradeSkillFrameSearchBox:ClearAllPoints()
 TradeSkillFrameSearchBox:SetPoint("TOPLEFT", TradeSkillFrameSearchBox:GetParent(), "TOPLEFT", 75, -56)
 TradeSkillFrameSearchBox:SetPoint("RIGHT", TradeSkillRankFrame, "LEFT", -8, 0)
-
--- Add a clear button to the searchbox like all other search boxes have
-local clearButton = CreateFrame("Button", "TradeSkillFrameSearchBoxClearButton", TradeSkillFrameSearchBox)
-clearButton:SetWidth(17)
-clearButton:SetHeight(17)
-clearButton:SetPoint("RIGHT", TradeSkillFrameSearchBox, "RIGHT", -3, 0)
-clearButton:SetScript("OnEnter", function(self) self.texture:SetAlpha(1.0) end)
-clearButton:SetScript("OnLeave", function(self) self.texture:SetAlpha(0.5) end)
-clearButton:SetScript("OnMouseDown", function(self) 
-		if self:IsEnabled() then
-			self.texture:SetPoint("TOPLEFT", 1, -1);
-		end
-	end)
-clearButton:SetScript("OnMouseUp", function(self) self.texture:SetPoint("TOPLEFT", 0, 0) end)
-clearButton:SetScript("OnClick", function(self) 
-		PlaySound("igMainMenuOptionCheckBoxOn")
-		local editBox = self:GetParent()
-		if editBox.clearFunc then
-			editBox.clearFunc(editBox)
-		end
-
-		editBox:SetText("")
-		if not editBox:HasFocus() then
-			editBox:GetScript("OnEditFocusLost")(editBox)
-		end
-		editBox:ClearFocus()
-	end)
-
-local clearButtonTexture = clearButton:CreateTexture("BTSUiClearButton", "ARTWORK")
-clearButtonTexture:SetTexture("Interface\\FriendsFrame\\ClearBroadcastIcon")
-clearButtonTexture:SetPoint("TOPLEFT", TradeSkillFrameSearchBoxClearButton, "TOPLEFT", 0, 0)
-clearButtonTexture:SetWidth(17)
-clearButtonTexture:SetHeight(17)
-
-clearButton.texture = clearButtonTexture
-
-
-function BTSUi.ShowClearButtonWhenNeeded(self)
-	local text = self:GetText();
-	if (text == SEARCH) then
-		if self:HasFocus() then self:SetText("") end
-		TradeSkillFrameSearchBoxClearButton:Hide()
-	else
-		TradeSkillFrameSearchBoxClearButton:Show()
-	end 
-end
-
--- Hooks for updating the visibility of the clear button
-TradeSkillFrameSearchBox:HookScript("OnEditFocusLost", BTSUi.ShowClearButtonWhenNeeded)
-TradeSkillFrameSearchBox:HookScript("OnTextChanged", BTSUi.ShowClearButtonWhenNeeded)
-TradeSkillFrameSearchBox:HookScript("OnEditFocusGained", BTSUi.ShowClearButtonWhenNeeded)
-
 
 -- Blizzard FilterButton
 TradeSkillFilterButton:Hide()
@@ -599,7 +547,8 @@ TradeSkillFrame:SetResizable(true);
 TradeSkillFrame:SetClampedToScreen(true)
 TradeSkillFrame:SetMinResize(BTSUI_TRADESKILLFRAME_WIDTH, 420)
 TradeSkillFrame:SetMaxResize(BTSUI_TRADESKILLFRAME_WIDTH, 700) -- This will also be set in the OnShow of the overlay, but make sure a default has been setup already
-TradeSkillFrame:SetScript("OnSizeChanged", function(self) BTSUi.HeightUpdated() end)
+
+TradeSkillFrame:HookScript("OnSizeChanged", function(self) BTSUi.HeightUpdated() end)
 
 -- Overlay is also the drag handle
 -- It is positioned at the bottom edge of the TradeSkillFrame
