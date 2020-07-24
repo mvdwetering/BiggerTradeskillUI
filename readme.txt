@@ -1,3 +1,8 @@
+---------
+This addon is obsolete since the default UI has a bigger tradeskill window now.
+Even though I liked my version/format better I will not be maintaining this addon.
+---------
+
 This World of Warcraft addon resizes the Tradeskill UI to the same size of the spellbook. 
 This gives more space to have easier access to the filters and a have a longer list.
 
